@@ -36,12 +36,6 @@
  */
 //----------------Load Plugin----------------//
 (function () {
-    var videojsOn = function (element, eventName, func, flag) {
-        element.addEventListener(eventName, func, flag);
-    };
-    var videojsOff = function (element, eventName, func, flag) {
-        element.removeEventListener(eventName, func, flag);
-    };
     var videojsAddClass = function (element, className) {
         element.classList.add(className);
     };
@@ -546,11 +540,12 @@
      * @param {Object=} options
      * @constructor
      */
-    var videojsSeekRSBar = videojs.extend(videojsComponent, {
+    var videojsSeekRSBar = videojs.extend(videojsSeekBar, {
         /** @constructor */
         constructor: function (player, options) {
             videojsComponent.call(this, player, options);
             this.on('mousedown', this.onMouseDown);
+            this.on('touchstart', this.onMouseDown);
         }
     });
 
@@ -579,14 +574,20 @@
         videojsBlockTextSelection();
 
         if (!this.rs.options.locked) {
-            videojsOn(document, "mousemove", videojs.bind(this, this.onMouseMove));
-            videojsOn(document, "mouseup", videojs.bind(this, this.onMouseUp));
+            this.on(document, "mousemove", videojs.bind(this, this.onMouseMove));
+            this.on(document, "mouseup", videojs.bind(this, this.onMouseUp));
+            this.on(document, "touchmove", videojs.bind(this, this.onMouseMove));
+            this.on(document, "touchend", videojs.bind(this, this.onMouseUp));
+
         }
     };
 
     videojsSeekRSBar.prototype.onMouseUp = function (event) {
-        videojsOff(document, "mousemove", this.onMouseMove, false);
-        videojsOff(document, "mouseup", this.onMouseUp, false);
+        this.off(document, "mousemove", videojs.bind(this, this.onMouseMove), false);
+        this.off(document, "mouseup", videojs.bind(this, this.onMouseUp), false);
+        this.off(document, "touchmove", videojs.bind(this, this.onMouseMove), false);
+        this.off(document, "touchend", videojs.bind(this, this.onMouseUp), false);
+
     };
 
     videojsSeekRSBar.prototype.onMouseMove = function (event) {
@@ -704,29 +705,6 @@
         return true;
     };
 
-    videojsSeekRSBar.prototype.calculateDistance = function (event) {
-        var rstbX = this.getRSTBX();
-        var rstbW = this.getRSTBWidth();
-        var handleW = this.getWidth();
-
-        // Adjusted X and Width, so handle doesn't go outside the bar
-        rstbX = rstbX + (handleW / 2);
-        rstbW = rstbW - handleW;
-
-        // Percent that the click is through the adjusted area
-        return Math.max(0, Math.min(1, (event.pageX - rstbX) / rstbW));
-    };
-
-    videojsSeekRSBar.prototype.getRSTBWidth = function () {
-        return this.el_.offsetWidth;
-    };
-    videojsSeekRSBar.prototype.getRSTBX = function () {
-        return videojsFindPosition(this.el_).left;
-    };
-    videojsSeekRSBar.prototype.getWidth = function () {
-        return this.rs.left.el_.offsetWidth;//does not matter left or right
-    };
-
     videojs.registerComponent('SeekRSBar', videojsSeekRSBar);
 
 
@@ -741,6 +719,7 @@
         constructor: function (player, options) {
             videojsComponent.call(this, player, options);
             this.on('mouseup', this.onMouseUp);
+            this.on('touchend', this.onMouseUp);
             this.fired = false;
         }
     });
@@ -854,6 +833,7 @@
         constructor: function (player, options) {
             videojsComponent.call(this, player, options);
             this.on('mousedown', this.onMouseDown);
+            this.on('touchstart', this.onMouseDown);
             this.pressed = false;
         }
     });
@@ -874,13 +854,15 @@
         videojsBlockTextSelection();
         if (!this.rs.options.locked) {
             this.pressed = true;
-            videojsOn(document, "mouseup", videojs.bind(this, this.onMouseUp));
+            this.on(document, "mouseup", videojs.bind(this, this.onMouseUp));
+            this.on(document, "touchend", videojs.bind(this, this.onMouseUp));
             videojsAddClass(this.el_, 'active');
         }
     };
 
     videojsSelectionBarLeft.prototype.onMouseUp = function (event) {
-        videojsOff(document, "mouseup", this.onMouseUp, false);
+        this.off(document, "mouseup", videojs.bind(this, this.onMouseUp), false);
+        this.off(document, "touchend", videojs.bind(this, this.onMouseUp), false);
         videojsRemoveClass(this.el_, 'active');
         if (!this.rs.options.locked) {
             this.pressed = false;
@@ -901,6 +883,7 @@
         constructor: function (player, options) {
             videojsComponent.call(this, player, options);
             this.on('mousedown', this.onMouseDown);
+            this.on('touchstart', this.onMouseDown);
             this.pressed = false;
         }
     });
@@ -922,13 +905,15 @@
         videojsBlockTextSelection();
         if (!this.rs.options.locked) {
             this.pressed = true;
-            videojsOn(document, "mouseup", videojs.bind(this, this.onMouseUp));
+            this.on(document, "mouseup", videojs.bind(this, this.onMouseUp));
+            this.on(document, "touchend", videojs.bind(this, this.onMouseUp));
             videojsAddClass(this.el_, 'active');
         }
     };
 
     videojsSelectionBarRight.prototype.onMouseUp = function (event) {
-        videojsOff(document, "mouseup", this.onMouseUp, false);
+        this.off(document, "mouseup", videojs.bind(this, this.onMouseUp), false);
+        this.off(document, "touchend", videojs.bind(this, this.onMouseUp), false);
         videojsRemoveClass(this.el_, 'active');
         if (!this.rs.options.locked) {
             this.pressed = false;
